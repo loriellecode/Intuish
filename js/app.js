@@ -990,6 +990,8 @@ function openSubject(id, keepTopic){
     if(e.target.closest("#delSubj")) return deleteSubject(s, w);
     if(e.target.closest("#editGoals")) return goalSheet(id, () => { renderHome(); reopen(); });
     if(e.target.closest("a[href^='#/']")) return w.remove();
+    // The whole lesson row opens the lesson, not just its Start button
+    const tr = e.target.closest(".topic-row"); if(tr && !e.target.closest("button,select,a")){ const a = tr.querySelector("a[href^='#/']"); if(a){ w.remove(); location.hash = a.getAttribute("href"); return; } }
     const o = e.target.closest(".orb"); if(o) pick(+o.dataset.i);
   });
   if(keepTopic != null && keepTopic < topics.length) pick(keepTopic);
@@ -1030,6 +1032,10 @@ let cur = null;       // current lesson
 const M = {mode:"split", pane:"study", mini:null};
 const app = $("#app"), stage = $("#stage");
 const narrowMQ = window.matchMedia("(max-width: 820px), (max-aspect-ratio: 1/1)");
+// Phones in portrait: video on top, questions below, both on screen at once (no Video/Study switch)
+const phoneMQ = window.matchMedia("(max-width: 600px) and (max-aspect-ratio: 1/1)");
+const syncPhone = () => document.documentElement.classList.toggle("phone", phoneMQ.matches);
+syncPhone(); phoneMQ.addEventListener ? phoneMQ.addEventListener("change", syncPhone) : phoneMQ.addListener(syncPhone);
 
 /* ----- Player (YouTube IFrame API with Intuish controls) ----- */
 const P = {yt:null, apiReady:false, apiFailed:false, ready:false, playing:false, started:false, t:0, dur:0, state:-1, loadedId:null, wantPlay:false, native:false,
@@ -1208,6 +1214,7 @@ function notesSize(){
 })();
 function layout(){
   app.classList.toggle("narrow", narrowMQ.matches);
+  app.classList.toggle("phone", phoneMQ.matches);
   stage.classList.toggle("expanded", M.mode === "expanded");
   stage.classList.toggle("q-expanded", !!M.qx);
   const qb = $("#qExpand"); if(qb){ qb.setAttribute("aria-expanded", !!M.qx); qb.hidden = !!M.qx; }
@@ -2659,6 +2666,120 @@ renderAvatar(); renderNotes(); finishSignIn();
 setTimeout(checkPending, 3000); window.addEventListener("online", checkPending);
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible"){ checkPending(); pullSync(); } else if(signedIn()){ clearTimeout(SYNC.t); pushSync(); } });
 window.addEventListener("online", () => { pullSync(); });
+
+/* ----- Phone: lesson notes open in a sheet from the Notes button ----- */
+$("#phNotesBtn").addEventListener("click", () => {
+  const notes = $("#notes"), home = notes.parentNode;
+  const w = sheet(`<div class="sheet-head"><h2>Notes</h2><button class="icon-btn" data-close aria-label="Close">${ICON.close}</button></div><div class="ph-notes-slot"></div>`);
+  w.querySelector(".sheet").classList.add("ph-notes-sheet");
+  w.querySelector(".ph-notes-slot").appendChild(notes); renderNotes();
+  const back = new MutationObserver(() => { if(!w.isConnected){ back.disconnect(); home.appendChild(notes); renderNotes(); } });
+  back.observe(document.body, {childList:true});
+});
+
+/* ----- Focus timer: straight through, or Pomodoro (25 min focus, 5 min break, 15 min every 4th) ----- */
+const FOCUS = {tick:0, last:-1, ac:null, ov:null};
+const FMIN = 60000;
+function focusPlan(total, mode){
+  if(mode !== "pomo") return [{k:"focus", a:0, b:total}];
+  const out = []; let t = 0, n = 0;
+  while(t < total){
+    const f = Math.min(25*FMIN, total - t); out.push({k:"focus", a:t, b:t+f}); t += f; n++;
+    if(t >= total) break;
+    const br = Math.min(n % 4 === 0 ? 15*FMIN : 5*FMIN, total - t); out.push({k:"break", a:t, b:t+br}); t += br;
+  }
+  // Never end on a break: the last bit of time goes to the final focus block
+  const z = out[out.length-1]; if(z.k === "break" && out.length > 1){ out.pop(); out[out.length-1].b = z.b; }
+  return out;
+}
+const fmtLeft = ms => { const s = Math.max(0, Math.ceil(ms/1000)), h = Math.floor(s/3600), m = Math.floor(s%3600/60), x = s%60; return h ? `${h}:${String(m).padStart(2,"0")}:${String(x).padStart(2,"0")}` : `${m}:${String(x).padStart(2,"0")}`; };
+const fmtDur = ms => { const m = Math.round(ms/FMIN), h = Math.floor(m/60), r = m%60; return h && r ? `${h} hr ${r} min` : h ? `${h} hr${h>1?"s":""}` : `${r} min`; };
+function audio(){ try { FOCUS.ac = FOCUS.ac || new (window.AudioContext || window.webkitAudioContext)(); if(FOCUS.ac.state === "suspended") FOCUS.ac.resume(); } catch(e){} return FOCUS.ac; }
+function tone(freq, at, len, vol){
+  const ac = audio(); if(!ac) return; const t0 = ac.currentTime + at, o = ac.createOscillator(), g = ac.createGain();
+  o.type = "sine"; o.frequency.value = freq; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(vol || .22, t0 + .03); g.gain.exponentialRampToValueAtTime(0.0001, t0 + len);
+  o.connect(g).connect(ac.destination); o.start(t0); o.stop(t0 + len + .05);
+}
+const chimeBreak = () => { tone(660, 0, 1.2); tone(880, .35, 1.4); };
+const chimeDone = () => { tone(523, 0, 1); tone(659, .3, 1); tone(784, .6, 1.6); };
+const beep = last => tone(last ? 988 : 740, 0, last ? .9 : .25, last ? .26 : .2);
+function focusOverlay(html){
+  focusOverlayClose();
+  const o = document.createElement("div"); o.className = "focus-ov"; o.innerHTML = `<div class="focus-card" role="dialog" aria-modal="true">${html}</div>`;
+  document.body.appendChild(o); FOCUS.ov = o; return o;
+}
+function focusOverlayClose(){ if(FOCUS.ov){ FOCUS.ov.remove(); FOCUS.ov = null; } }
+function focusStop(){ clearInterval(FOCUS.tick); FOCUS.tick = 0; FOCUS.last = -1; delete D.ui.focus; save(); focusOverlayClose(); focusPill(); }
+function focusPill(){
+  const f = D.ui.focus, b = $("#focusBtn"), l = $("#focusLeft"); if(!b) return;
+  if(!f){ b.classList.remove("on", "brk"); l.hidden = true; return; }
+  const t = now() - f.start, i = f.plan.findIndex(x => t < x.b), ph = f.plan[i];
+  b.classList.add("on"); b.classList.toggle("brk", !!ph && ph.k === "break"); l.hidden = false;
+  l.textContent = ph ? fmtLeft(f.start + ph.b - now()) : "0:00";
+}
+function focusTick(){
+  const f = D.ui.focus; if(!f) return;
+  const t = now() - f.start, i = f.plan.findIndex(x => t < x.b);
+  focusPill();
+  if(i < 0){ // whole session used up
+    const studied = f.plan.filter(x => x.k === "focus").reduce((a, x) => a + x.b - x.a, 0);
+    clearInterval(FOCUS.tick); FOCUS.tick = 0; delete D.ui.focus; save(); focusPill(); chimeDone();
+    const o = focusOverlay(`<span class="focus-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><h2>Session done</h2><p>You focused for ${fmtDur(studied)}. Nice work.</p><button class="btn" data-fclose>Close</button>`);
+    o.querySelector("[data-fclose]").onclick = focusOverlayClose; return;
+  }
+  const ph = f.plan[i], left = f.start + ph.b - now();
+  if(i !== FOCUS.last){
+    const first = FOCUS.last < 0; FOCUS.last = i;
+    if(ph.k === "break"){
+      if(!first){ P.pause(); chimeBreak(); }
+      const o = focusOverlay(`<span class="focus-ico"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17M8 3v3M12 3v3"/></svg></span><h2>Break time</h2><p>You have <b>${fmtDur(ph.b - ph.a)}</b> to relax, grab a snack or stretch.</p><div class="focus-count" id="focusCount">${fmtLeft(left)}</div><p class="focus-sub">The next focus block starts when the countdown ends.</p><button class="btn outline" data-skip>Skip break</button>`);
+      o.querySelector("[data-skip]").onclick = () => { const d = f.start + ph.b - now(); f.start -= d; save(); FOCUS.tick && focusTick(); };
+    } else {
+      if(!first){ focusOverlayClose(); tone(784, 0, .6); toast(`Focus block ${f.plan.slice(0, i+1).filter(x => x.k === "focus").length} started`); }
+    }
+  }
+  if(ph.k === "break"){
+    const c = document.getElementById("focusCount"); if(c) c.textContent = fmtLeft(left);
+    const s = Math.ceil(left/1000);
+    if(s <= 3 && s >= 1 && FOCUS.beeped !== s){ FOCUS.beeped = s; beep(s === 1); }
+  }
+}
+function focusRun(){ clearInterval(FOCUS.tick); FOCUS.last = -1; FOCUS.tick = setInterval(focusTick, 500); focusTick(); }
+function openFocus(){
+  const f = D.ui.focus;
+  if(f){
+    const t = now() - f.start, i = f.plan.findIndex(x => t < x.b), ph = f.plan[i] || {};
+    const end = new Date(f.start + f.total).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"});
+    const w = sheet(`<div class="sheet-head"><div><div class="eyebrow">${f.mode === "pomo" ? "Pomodoro" : "Straight through"}</div><h2>${ph.k === "break" ? "On a break" : "Focusing"}</h2></div><button class="icon-btn" data-close aria-label="Close">${ICON.close}</button></div>
+      <p class="set-p">${fmtLeft(f.start + (ph.b || 0) - now())} left in this ${ph.k === "break" ? "break" : "block"}. The session ends at ${end}.</p>
+      <div class="set-row"><button class="btn outline" id="focusEnd">End session</button></div>`);
+    w.querySelector("#focusEnd").onclick = () => { w.remove(); focusStop(); toast("Focus session ended"); };
+    return;
+  }
+  let len = (D.ui.focusPick || {}).len || 60, mode = (D.ui.focusPick || {}).mode || "pomo";
+  const LENS = [[60, "1 hr"], [90, "1.5 hrs"], [120, "2 hrs"], [150, "2.5 hrs"], [180, "3 hrs"]];
+  const w = sheet(`<div class="sheet-head"><div><div class="eyebrow">Focus timer</div><h2>How long do you want to study?</h2></div><button class="icon-btn" data-close aria-label="Close">${ICON.close}</button></div>
+    <div class="fp-row" id="fLens">${LENS.map(([m, t]) => `<button class="fp-chip" data-len="${m}" aria-pressed="${m === len}">${t}</button>`).join("")}</div>
+    <div class="focus-modes" id="fModes">
+      <button class="focus-mode" data-mode="pomo" aria-pressed="${mode === "pomo"}"><b>Pomodoro</b><span>25 min focus, then a 5 min break. Every 4th break is 15 min.</span></button>
+      <button class="focus-mode" data-mode="straight" aria-pressed="${mode === "straight"}"><b>Straight through</b><span>One long block with no breaks.</span></button>
+    </div>
+    <p class="set-note" id="fSum"></p>
+    <div class="set-row"><button class="btn" id="fStart">Start focusing</button></div>`);
+  const sum = () => { const plan = focusPlan(len*FMIN, mode), br = plan.filter(x => x.k === "break");
+    w.querySelector("#fSum").textContent = mode === "pomo" ? `${plan.length - br.length} focus blocks and ${br.length} break${br.length === 1 ? "" : "s"}. Keep the app open so it can call your breaks.` : `${fmtDur(len*FMIN)} of focus. Keep the app open so it can tell you when you're done.`; };
+  sum();
+  w.querySelector("#fLens").onclick = e => { const b = e.target.closest("[data-len]"); if(!b) return; len = +b.dataset.len; w.querySelectorAll("[data-len]").forEach(x => x.setAttribute("aria-pressed", x === b)); sum(); };
+  w.querySelector("#fModes").onclick = e => { const b = e.target.closest("[data-mode]"); if(!b) return; mode = b.dataset.mode; w.querySelectorAll("[data-mode]").forEach(x => x.setAttribute("aria-pressed", x === b)); sum(); };
+  w.querySelector("#fStart").onclick = () => {
+    audio(); // unlock sound while we have a tap
+    D.ui.focusPick = {len, mode}; D.ui.focus = {start:now(), total:len*FMIN, mode, plan:focusPlan(len*FMIN, mode)}; save();
+    w.remove(); focusRun(); toast(mode === "pomo" ? "Focus started. First break in 25 min." : `Focus started for ${fmtDur(len*FMIN)}.`);
+  };
+}
+$("#focusBtn").addEventListener("click", () => { audio(); openFocus(); });
+if(D.ui.focus){ if(now() - D.ui.focus.start < D.ui.focus.total) focusRun(); else { delete D.ui.focus; save(); } }
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && D.ui.focus) focusTick(); });
 
 route();
 })();

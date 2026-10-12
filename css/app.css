@@ -633,3 +633,147 @@ html,body{overscroll-behavior:none}
 .rec-row span{flex:1;min-width:0;display:flex;flex-direction:column}
 .rec-row small{color:var(--muted);font-size:13px}
 .rec-row .btn{height:34px;padding:0 14px}
+
+/* ===== Phone, portrait (<=600px): same calm look, one column ===== */
+html.phone .pulse{grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+html.phone .pc{padding:12px 14px;gap:10px}
+html.phone .pc-streak,html.phone .pc-rem{flex-direction:column;align-items:flex-start;gap:8px}
+html.phone .pc-heat{grid-column:1/-1;justify-content:flex-start;gap:14px}
+html.phone .hm-grid{grid-template-columns:repeat(7,minmax(0,1fr));flex:1;max-width:210px;gap:4px}
+html.phone .hm{width:auto;height:12px}
+html.phone .pc-heat small{max-width:none}
+html.phone .h-clock,html.phone .app.phone .clock{display:none}
+.app.phone{grid-template-rows:auto minmax(0,1fr);padding:max(8px,env(safe-area-inset-top,0px)) 10px max(10px,env(safe-area-inset-bottom,0px));gap:8px}
+.app.phone .clock{display:none}
+.app.phone .seg-row{display:none}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded){display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .lesson,
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .activity{display:flex !important}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .divider{display:none}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .lesson{flex:0 0 auto;padding:10px 12px 8px;gap:6px;border-radius:20px;overflow:hidden}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .lesson-head{display:none}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .lesson>h1{font-size:15px;line-height:1.25;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .lesson-notes,
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .notes-grip{display:none}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .activity{flex:1 1 0;min-height:0;border-radius:20px}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .player .controls{gap:2px}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .player .controls .ctl{min-width:36px}
+.app.phone .stage:not(.mini):not(.expanded):not(.q-expanded) .player .controls .time{display:none}
+.app.phone .act-head{padding:12px 14px 0}
+.app.phone .act-body{padding:12px 14px}
+.app.phone .act-foot{padding:10px 14px max(12px,env(safe-area-inset-bottom,0px))}
+html.phone .grid{flex:none;grid-template-rows:none;grid-auto-rows:auto;gap:12px}
+html.phone .grid .tile{min-height:0}
+html.phone .grid .art{flex:none;height:auto;aspect-ratio:10/8}
+html.phone .grid .art svg{width:100%;height:100%;display:block}
+.app.phone .act-title{align-items:center;gap:8px}
+.app.phone .act-title h2{font-size:16px;line-height:1.2;min-width:0}
+.app.phone .act-title .count{font-size:13px;white-space:nowrap}
+html.phone .wrap{height:auto;min-height:100dvh}
+html.phone #homeView .grid,html.phone #homeView .grid.many{flex:none;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:none;grid-auto-rows:auto}
+html.phone #homeView .grid .art,html.phone #homeView .grid.many .art{flex:none;min-height:0;aspect-ratio:10/8;position:relative}
+html.phone #homeView .tile-h{min-width:0;gap:6px}
+html.phone #homeView .tile-h b{min-width:0;font-size:15px;overflow:hidden;text-overflow:ellipsis}
+html.phone #homeView .tile-h .ring{width:38px;height:38px;flex:none}
+html.phone #homeView .tile{max-width:100%}
+
+/* Lesson rows: titles shorten instead of pushing the Start button off screen; the whole row is tappable */
+.tr-t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-t b > *{vertical-align:middle}
+.topic-row{cursor:pointer;min-width:0}
+.topic-row .act{flex:none}
+
+/* ===== Phone: subject sheet ===== */
+html.phone .scrim{padding:8px}
+html.phone .h-panel{padding:16px 14px;gap:14px;border-radius:24px;max-height:calc(100% - 8px)}
+html.phone .p-head{grid-template-columns:56px minmax(0,1fr) auto;gap:12px}
+html.phone .p-head .art{border-radius:16px}
+html.phone .p-head h2{font-size:20px}
+html.phone .p-head p{font-size:13px;line-height:1.35}
+html.phone .goal-chips{gap:4px}
+html.phone .goal-chip{font-size:12px;padding:4px 9px}
+html.phone .h-panel .ring[style*="84px"]{width:52px!important;height:52px!important}
+html.phone .h-panel .ring[style*="84px"] svg{width:52px;height:52px}
+html.phone .orbs{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px 4px}
+html.phone .orb{padding:4px 0;gap:6px;min-width:0}
+html.phone .orb .globe{width:60px;height:60px}
+html.phone .orb .add-globe svg{width:20px;height:20px}
+html.phone .orb[aria-pressed="true"] .globe{outline-offset:3px}
+html.phone .orb b{font-size:11.5px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html.phone .orb small{font-size:10.5px;margin-top:-4px}
+html.phone .detail{padding:10px 12px;border-radius:18px;gap:8px}
+html.phone .detail .h-t{min-width:0}
+html.phone .detail .h-t b{font-size:16px}
+html.phone .detail .act{height:32px;padding:0 10px;font-size:12.5px}
+html.phone .topic-row{gap:10px;padding:8px 0}
+html.phone .topic-row .tr-ico{width:30px;height:30px;border-radius:10px}
+html.phone .tr-t b{font-size:13.5px}
+html.phone .tr-t span{font-size:11.5px}
+html.phone .topic-row .act{height:32px;padding:0 12px;font-size:12.5px;gap:4px}
+html.phone .topic-row .act svg{display:none}
+html.phone .sec-h h3{font-size:15px!important}
+html.phone .sec-h h3 .muted{font-size:12px!important}
+html.phone .lessons{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 8px}
+html.phone .vcard{gap:6px}
+html.phone .vthumb{border-radius:12px;aspect-ratio:4/3}
+html.phone .vtag{display:none}
+html.phone .vmeta{grid-template-columns:1fr;gap:0}
+html.phone .vmeta .av,html.phone .vmeta > div > span{display:none}
+html.phone .vmeta b{font-size:12px;line-height:1.25}
+html.phone .src-x{width:24px;height:24px}
+
+/* ===== Phone: home, compact and scannable ===== */
+html.phone .pc-streak,html.phone .pc-rem{flex-direction:row;align-items:center;gap:10px}
+html.phone .pc .flame{width:38px;height:38px;border-radius:12px}
+html.phone .pc-rem .ring{width:40px!important;height:40px!important}
+html.phone .pc-rem .ring svg{width:40px;height:40px}
+html.phone .pc-rem .ring span,html.phone .pc-rem .ring b{font-size:11px}
+html.phone .pc b{font-size:17px}
+html.phone .pc-streak b{font-size:20px}
+html.phone .pc-txt{min-width:0}
+html.phone .pc-txt > span,html.phone .pc small{font-size:12px;line-height:1.3}
+html.phone .pc-heat{padding:10px 14px}
+#detail .detail{flex-wrap:nowrap}
+#detail .detail > *{min-width:0;max-width:100%}
+html.phone #homeView .grid,html.phone #homeView .grid.many{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+html.phone #homeView .tile{border-radius:20px}
+html.phone #homeView .grid .art{margin:6px 6px 0;border-radius:15px;aspect-ratio:1/1}
+html.phone #homeView .tile-b{padding:8px 10px 10px;gap:8px}
+html.phone #homeView .tile-h{display:block}
+html.phone #homeView .tile-h b{display:block;font-size:13px;white-space:nowrap}
+html.phone #homeView .tile-h .ring{display:none}
+html.phone #homeView .tile .segs i{height:5px}
+html.phone #homeView .tile-add{border-radius:20px;font-size:12px;gap:6px}
+html.phone #homeView .tile-add span{width:40px;height:40px}
+html.phone .pc-rem b{font-size:15px}
+html.phone .hm{height:9px}
+html.phone .pc-heat{padding:10px 14px}
+
+/* Notes button: phone only; notes open in a sheet */
+.ph-notes-btn{display:none}
+.app.phone .ph-notes-btn{display:grid}
+.act-right{display:inline-flex;align-items:center;gap:8px}
+.ph-notes-sheet .lesson-notes{display:flex!important;flex-direction:column;max-height:none;overflow:visible}
+.ph-notes-sheet{max-height:min(80vh,calc(100% - 16px))}
+
+/* Focus timer */
+.focus-btn{height:36px;min-width:36px;padding:0 10px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:var(--surface);border:1px solid var(--line);color:var(--ink);font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.focus-btn:hover{border-color:var(--ink)}
+.focus-btn.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.focus-btn.on.brk{background:var(--soft);border-color:var(--line);color:var(--ink)}
+.top .right{display:flex;align-items:center;gap:8px}
+.focus-modes{display:grid;gap:8px}
+.focus-mode{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;padding:12px 14px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.focus-mode b{font-size:15px}
+.focus-mode span{font-size:13px;color:var(--muted)}
+.focus-mode[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.focus-ov{position:fixed;inset:0;z-index:95;display:grid;place-items:center;padding:16px;background:rgba(14,14,15,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:fade .3s ease both}
+.focus-card{width:min(420px,100%);background:var(--surface);color:var(--ink);border-radius:28px;box-shadow:var(--shadow-float);padding:28px 24px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.focus-card h2{margin:0;font-family:var(--display);font-size:24px}
+.focus-card p{margin:0;color:var(--ink-2);font-size:15px;line-height:1.45;max-width:32ch}
+.focus-card .focus-sub{color:var(--muted);font-size:13px}
+.focus-ico{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--accent)}
+.focus-count{font-family:var(--sf);font-size:52px;font-weight:600;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:4px 0}
+.focus-card .btn{margin-top:6px}
+html.phone .focus-btn{height:34px;min-width:34px;padding:0 8px}
+.ph-notes-sheet .notes-head h3{display:none}
