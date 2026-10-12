@@ -2034,6 +2034,16 @@ async function verifyCode(email, code){
   }
   throw new Error("code");
 }
+// Email + password (no email needs to be delivered)
+async function passAuth(mode, email, password){
+  const url = mode === "up" ? `${AUTH.url}/auth/v1/signup` : `${AUTH.url}/auth/v1/token?grant_type=password`;
+  const r = await fetch(url, {method:"POST", headers:{apikey:AUTH.anonKey, "Content-Type":"application/json"}, body:JSON.stringify({email, password})});
+  const j = await r.json().catch(() => ({}));
+  if(r.status === 429) throw new Error("wait");
+  if(!r.ok){ const m = String(j.msg || j.error_description || j.message || ""); throw new Error(/already|registered/i.test(m) ? "exists" : /invalid|credentials/i.test(m) ? "bad" : /password/i.test(m) ? "weak" : "fail"); }
+  if(!j.access_token) throw new Error("confirm");
+  D.profile.session = {first:true}; setSession(j);
+}
 async function freshToken(){
   const s = D.profile.session; if(!s || !s.refresh) throw new Error("signed-out");
   if(s.access && s.exp - now() > 60000) return s.access;
@@ -2194,9 +2204,9 @@ function openSettings(page){
         <p class="set-note" id="syncNote">${SYNC.state === "err" ? "Couldn’t reach the server just now. Changes are kept here and will sync when you’re back online." : SYNC.at ? `Synced ${new Date(SYNC.at).toLocaleTimeString([], {hour:"numeric", minute:"2-digit"})}.` : "Syncing…"}</p>
         <div class="set-row"><button class="btn outline" id="syncNow">Sync now</button><button class="btn outline" id="signOut">Sign out</button></div>`
       : !AUTH ? `<p class="set-p"><b>Email sign-in isn’t working yet.</b> It’s coming in a future update. Your progress, notes and photos are saved on this device until then.</p>`
-      : `<p class="set-p">Sign in with your email to save your progress online. No password: we email you a 6-digit code.</p>
-        <form id="signForm" class="set-inline"><input id="signEmail" type="email" required placeholder="you@example.com" value="${esc(pr.email)}" autocomplete="email"><button class="btn" type="submit">Send code</button></form>
-        <form id="codeForm" class="set-inline" hidden><input id="signCode" inputmode="numeric" autocomplete="one-time-code" maxlength="10" placeholder="6-digit code" aria-label="Code from the email"><button class="btn" type="submit">Sign in</button></form>
+      : `<p class="set-p">Sign in to save your progress online. New here? Choose a password and tap Create account.</p>
+        <form id="signForm" class="set-col"><input id="signEmail" type="email" required placeholder="you@example.com" value="${esc(pr.email)}" autocomplete="email"><input id="signPass" type="password" required minlength="6" placeholder="Password (6+ characters)" autocomplete="current-password">
+        <div class="set-row"><button class="btn" type="submit" data-mode="in">Sign in</button><button class="btn outline" type="submit" data-mode="up">Create account</button></div></form>
         <p class="set-note" id="signNote"></p>`}`,
     fonts: page === "fonts" ? fontsPage() : "",
     ai: D.ui.aiKey && !aiEdit ? `      <div class="ai-done" role="status"><span class="ai-check" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
@@ -2237,18 +2247,11 @@ function openSettings(page){
   const sf = w.querySelector("#signForm");
   if(sf) sf.onsubmit = async ev => {
     ev.preventDefault();
-    const email = w.querySelector("#signEmail").value.trim(), note = w.querySelector("#signNote");
-    D.profile.email = email; save(); note.textContent = "Sending…";
-    try { await sendLink(email); note.textContent = `We emailed a code to ${email}. Type it here (check spam if it isn’t there).`; q("#codeForm").hidden = false; setTimeout(() => q("#signCode").focus(), 50); }
-    catch(e){ note.textContent = e.message === "offline" ? "Email sign-in is coming soon, so no code was sent yet." : e.message === "wait" ? "A code was sent a moment ago. Wait a minute before asking for another." : "The code couldn’t be sent. Check the email and try again."; }
-  };
-  const cf = w.querySelector("#codeForm");
-  if(cf) cf.onsubmit = async ev => {
-    ev.preventDefault();
-    const code = q("#signCode").value.replace(/\s/g, ""), note = q("#signNote"); if(!code) return;
-    note.textContent = "Checking…";
-    try { await verifyCode(D.profile.email, code); renderAvatar(); toast(`Signed in as ${D.profile.email}`); w.remove(); pullSync(); }
-    catch(e){ note.textContent = "That code didn’t work. Check it, or send a new one."; }
+    const mode = (ev.submitter && ev.submitter.dataset.mode) || "in";
+    const email = q("#signEmail").value.trim(), pass = q("#signPass").value, note = q("#signNote");
+    D.profile.email = email; save(); note.textContent = mode === "up" ? "Creating your account…" : "Signing in…";
+    try { await passAuth(mode, email, pass); renderAvatar(); toast(`Signed in as ${D.profile.email}`); w.remove(); pullSync(); }
+    catch(e){ note.textContent = ({offline:"Sign-in isn’t switched on yet.", wait:"Too many tries. Wait a minute and try again.", exists:"That email already has an account. Tap Sign in instead.", bad:"That email or password didn’t work. If you’re new, tap Create account.", weak:"Choose a longer password (6 or more characters).", confirm:"Check your email to confirm the account, then tap Sign in.", fail:"Couldn’t sign in. Check your connection and try again."})[e.message] || "Couldn’t sign in. Try again."; }
   };
   if(q("#aiForm")) q("#aiForm").onsubmit = async ev => {
     ev.preventDefault();
