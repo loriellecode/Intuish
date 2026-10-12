@@ -1,11 +1,11 @@
 // Intuish AI checker: a free Cloudflare Worker that grades written answers with Google Gemini.
 // The Gemini key lives in the Worker as a secret named GEMINI_KEY, so it never reaches the app or the browser.
-const ALLOWED = [/^https:\/\/imatiny408-tech\.github\.io$/, /^https:\/\/[a-z0-9-]+\.claudeusercontent\.com$/, /^http:\/\/localhost(:\d+)?$/];
+const ALLOWED = [/^https:\/\/loriellecode\.github\.io$/, /^https:\/\/[a-z0-9-]+\.claudeusercontent\.com$/, /^http:\/\/localhost(:\d+)?$/];
 const MODEL = "gemini-2.5-flash";
 
 function cors(origin){
   const ok = ALLOWED.some(r => r.test(origin || ""));
-  return {"Access-Control-Allow-Origin": ok ? origin : "https://imatiny408-tech.github.io", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin"};
+  return {"Access-Control-Allow-Origin": ok ? origin : "https://loriellecode.github.io", "Access-Control-Allow-Methods": "POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type", "Vary": "Origin"};
 }
 const json = (body, status, h) => new Response(JSON.stringify(body), {status, headers: {...h, "Content-Type": "application/json"}});
 

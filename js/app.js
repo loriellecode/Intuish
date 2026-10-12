@@ -2268,7 +2268,7 @@ function openSettings(page){
       note.textContent = /API key|API_KEY/i.test(e.detail || "") ? "That key didn’t work. Copy it again from AI Studio and paste the whole thing."
         : /403/.test(e.message) ? "Google turned this key down. In AI Studio, make sure the key’s project has the Gemini API turned on." + d
         : /429/.test(e.message) ? "Google says this key is busy or over its free limit. Wait a minute and try again." + d
-        : e.message === "network" && !/github\.io$/.test(location.hostname) ? "This preview can’t reach Google. Open Intuish at imatiny408-tech.github.io/Intuish/app and add the key there."
+        : e.message === "network" && !/github\.io$/.test(location.hostname) ? "This preview can’t reach Google. Open Intuish at loriellecode.github.io/Intuish/app and add the key there."
         : e.message === "network" ? "Couldn’t reach Google. Check your connection, turn off any content blocker for this site, and try again."
         : e.message === "timeout" ? "Google took too long to answer. Try again."
         : "Google couldn’t answer right now (" + e.message + ")." + d; }
@@ -2392,7 +2392,7 @@ function installPage(){
       <div><b>Mac</b><span>Safari → File → Add to Dock, or Chrome → Install</span></div>
       <div><b>Windows</b><span>Edge or Chrome → Install icon in the address bar</span></div>
     </div>
-    <p class="set-note">Install from Intuish’s website: imatiny408-tech.github.io/Intuish/app</p>`;
+    <p class="set-note">Install from Intuish’s website: loriellecode.github.io/Intuish/app</p>`;
 }
 
 /* ----- Capture to notes: the AI looks at the last few seconds of the video (what's on screen and what's said)
