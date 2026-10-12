@@ -2271,7 +2271,7 @@ function openSettings(page){
         <div class="set-row"><button class="btn" type="submit">Save</button></div>
         <p class="set-note" id="aiNote">Free, no card needed. Your key stays on this device and is only sent to Google.</p></form>`,
     appearance: `      <p class="set-p">Choose how Intuish looks. Device follows your iPad or computer’s light and dark setting.</p>
-      <div class="fp-row theme-row">${[["", "Device"], ["light", "Light"], ["dark", "Dark"]].map(([k, t]) => `<button class="fp-chip" data-theme-pick="${k}" aria-pressed="${(D.ui.theme || "") === k}">${t}</button>`).join("")}</div>`,
+      <div class="fp-row theme-row">${[["", "Device"], ["light", "Light"], ["dark", "Dark"], ["slate", "Slate Blue"]].map(([k, t]) => `<button class="fp-chip" data-theme-pick="${k}" aria-pressed="${(D.ui.theme || "") === k}">${t}</button>`).join("")}</div>`,
     install: page === "install" ? installPage() : "",
     data: `      <div class="set-row"><button class="btn outline" id="setNotes">Notes</button><button class="btn outline" id="setReset">Erase all my progress</button></div>
       <p class="set-note">Progress, notes and PDFs are saved in this browser, with a backup copy kept on this device. On iPad, the Home Screen app and a Safari tab each keep their own copy.</p>
@@ -2393,9 +2393,11 @@ function loadFont(k){
 }
 function applyTheme(){
   const t = D.ui.theme, r = document.documentElement;
-  if(t === "light" || t === "dark") r.dataset.theme = t; else delete r.dataset.theme;
-  const dark = t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
-  const m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = dark ? "#0E0E0F" : "#FBFBFA";
+  // Slate Blue rides on the dark styles, then swaps the colors (css: html.slate)
+  if(t === "light" || t === "dark") r.dataset.theme = t; else if(t === "slate") r.dataset.theme = "dark"; else delete r.dataset.theme;
+  r.classList.toggle("slate", t === "slate");
+  const dark = t === "dark" || t === "slate" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+  const m = document.querySelector('meta[name="theme-color"]'); if(m) m.content = t === "slate" ? "#3F70AE" : dark ? "#0E0E0F" : "#FBFBFA";
 }
 try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => applyTheme()); } catch(e){}
 function applyFonts(){

@@ -794,3 +794,34 @@ html.phone .focus-btn{height:34px;min-width:34px;padding:0 8px}
 .crop-zoom{display:flex;align-items:center;gap:10px;color:var(--muted);padding:0 6px}
 .crop-zoom input{flex:1;accent-color:var(--accent,#1a73e8);height:28px}
 .crop-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+
+/* Slate Blue appearance: same layout, deep blue gradient, frosted glass cards, white text */
+:root.slate[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:transparent; --surface:rgba(255,255,255,.11); --soft:rgba(255,255,255,.10); --soft-2:rgba(255,255,255,.18); --line:rgba(255,255,255,.20);
+  --ink:#FFFFFF; --ink-2:#E4EDF9; --muted:#B9CBE3; --on-ink:#1C467F;
+  --i1:#FFFFFF; --i2:#C9D8EC; --i3:rgba(255,255,255,.45); --i4:rgba(255,255,255,.22); --i5:rgba(255,255,255,.10);
+  --video-a:#2E5C99; --video-b:#21487F; --figure:#163764; --figure-2:#4A78B4;
+  --accent:#CFE3FF; --accent-2:#9FD3FF;
+  --shadow:0 1px 2px rgba(8,24,56,.18),0 10px 30px rgba(8,24,56,.22);
+  --shadow-float:0 2px 6px rgba(8,24,56,.25),0 24px 60px rgba(8,24,56,.45);
+  --ambient:0 8px 24px -8px rgba(8,24,56,.35);
+  --note-field:rgba(255,255,255,.10); --note-field-line:rgba(255,255,255,.22); --note-inset:rgba(255,255,255,.08); --note-chip:rgba(255,255,255,.14);
+  --note-line:rgba(255,255,255,.18); --note-ico:#C9D8EC; --note-ph:#A9BEDB; --note-tag:#CFE3FF;
+  --note-glass:rgba(34,74,134,.94); --note-glass-ink:#FFFFFF; --note-glass-ph:#A9BEDB;
+  --danger-ink:#FFC2BA; --danger-soft:rgba(255,120,105,.18);
+  --ok:#5FD898; --ok-soft:rgba(95,216,152,.16); --ok-ink:#A6F0C6;
+  --bad:#FF7A70; --bad-soft:rgba(255,122,112,.18); --bad-ink:#FFC2BA;
+  background:#1B4580;
+}
+html.slate body{background:transparent}
+html.slate body::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:radial-gradient(120% 60% at 15% 0%,rgba(140,180,225,.35),transparent 60%),linear-gradient(180deg,#4C7DB8 0%,#3567A8 30%,#24558F 62%,#163A6E 100%)}
+/* glass cards and panels */
+:root.slate[data-theme="dark"] .stage .panel{background:rgba(255,255,255,.10);border-color:rgba(255,255,255,.18)}
+:root.slate[data-theme="dark"] :is(.sheet,.menu,.h-panel,.toast,.focus-card){background:linear-gradient(180deg,rgba(66,110,170,.97),rgba(30,68,126,.97));border:1px solid rgba(255,255,255,.18);color:var(--ink);-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px)}
+/* solid accent buttons become white pills with blue text */
+:root.slate[data-theme="dark"] :is(.note-new .btn,.note-add,.resume-pill,.rs-ico,.arrange-btn.on,.focus-btn.on,.stage.expanded .fs-note-btn[aria-expanded="true"],.stage.expanded .fs-cap-btn.busy){background:#FFFFFF;color:#1C467F;border-color:#FFFFFF}
+:root.slate[data-theme="dark"] .hm.l1{background:rgba(207,227,255,.28)}:root.slate[data-theme="dark"] .hm.l2{background:rgba(207,227,255,.48)}:root.slate[data-theme="dark"] .hm.l3{background:rgba(207,227,255,.72)}
+:root.slate[data-theme="dark"] :is(.set-ico,.tile-add span){background:rgba(255,255,255,.14)}
+:root.slate[data-theme="dark"] :is(.h-mark .logo,.brand-mini img){filter:brightness(0) invert(1);opacity:.92}
