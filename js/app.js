@@ -2172,15 +2172,60 @@ function pickPhoto(onDone){
   inp.onchange = () => {
     const f = inp.files[0]; if(!f) return;
     const img = new Image(), url = URL.createObjectURL(f);
-    img.onload = () => {
-      const s = Math.min(img.width, img.height), c = document.createElement("canvas"); c.width = c.height = 256;
-      c.getContext("2d").drawImage(img, (img.width - s) / 2, (img.height - s) / 2, s, s, 0, 0, 256, 256);
-      D.profile.photo = c.toDataURL("image/jpeg", .85); URL.revokeObjectURL(url); save(); renderAvatar(); onDone && onDone();
-    };
-    img.onerror = () => toast("That image couldn’t be opened");
+    img.onload = () => cropPhoto(img, url, onDone);
+    img.onerror = () => { URL.revokeObjectURL(url); toast("That image couldn’t be opened"); };
     img.src = url;
   };
   inp.click();
+}
+// Crop screen: drag to move, pinch / wheel / slider to zoom, the circle is what gets saved
+function cropPhoto(img, url, onDone){
+  const iw = img.naturalWidth, ih = img.naturalHeight, box = Math.min(300, innerWidth - 88);
+  const w = sheet(`<div class="sheet-head"><div><div class="eyebrow">Profile photo</div><h2>Crop your photo</h2></div><button class="icon-btn" data-close aria-label="Cancel">${ICON.close}</button></div>
+    <div class="crop-stage" id="cropStage" style="--cs:${box}px"><img src="${url}" alt="" draggable="false"><div class="crop-ring" aria-hidden="true"></div></div>
+    <p class="crop-hint">Drag to move. Pinch or use the slider to zoom.</p>
+    <div class="crop-zoom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/></svg><input type="range" id="cropZoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></div>
+    <div class="crop-btns"><button type="button" class="btn outline" data-close>Cancel</button><button type="button" class="btn" id="cropSave">Use photo</button></div>`);
+  w.querySelector(".sheet").classList.add("crop-sheet");
+  const stage = w.querySelector("#cropStage"), pic = stage.querySelector("img"), zoom = w.querySelector("#cropZoom");
+  const base = box / Math.min(iw, ih); let z = 1, tx = 0, ty = 0;
+  pic.style.width = iw + "px"; pic.style.height = ih + "px";
+  const draw = () => {
+    const sc = base * z, mx = Math.max(0, (iw * sc - box) / 2), my = Math.max(0, (ih * sc - box) / 2);
+    tx = Math.min(mx, Math.max(-mx, tx)); ty = Math.min(my, Math.max(-my, ty));
+    pic.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${sc})`;
+    zoom.value = z;
+  };
+  const setZoom = (nz, cx = 0, cy = 0) => { // cx, cy: zoom point relative to the stage center
+    nz = Math.min(4, Math.max(1, nz)); const k = nz / z;
+    tx = cx - (cx - tx) * k; ty = cy - (cy - ty) * k; z = nz; draw();
+  };
+  const pts = new Map(); let last = null;
+  const center = () => { const r = stage.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  const snap = () => { const a = [...pts.values()]; if(a.length >= 2){ const [p, q] = a; last = {d:Math.hypot(p.x - q.x, p.y - q.y), x:(p.x + q.x) / 2, y:(p.y + q.y) / 2}; } else if(a.length) last = {x:a[0].x, y:a[0].y}; else last = null; };
+  stage.addEventListener("pointerdown", e => { stage.setPointerCapture(e.pointerId); pts.set(e.pointerId, {x:e.clientX, y:e.clientY}); snap(); });
+  stage.addEventListener("pointermove", e => {
+    if(!pts.has(e.pointerId) || !last) return; pts.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    const a = [...pts.values()];
+    if(a.length >= 2){
+      const [p, q] = a, d = Math.hypot(p.x - q.x, p.y - q.y), mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2, [cx, cy] = center();
+      tx += mx - last.x; ty += my - last.y; if(last.d) setZoom(z * d / last.d, mx - cx, my - cy); else draw();
+    } else { tx += a[0].x - last.x; ty += a[0].y - last.y; draw(); }
+    snap();
+  });
+  const up = e => { pts.delete(e.pointerId); snap(); };
+  stage.addEventListener("pointerup", up); stage.addEventListener("pointercancel", up);
+  stage.addEventListener("wheel", e => { e.preventDefault(); const [cx, cy] = center(); setZoom(z * Math.exp(-e.deltaY / 400), e.clientX - cx, e.clientY - cy); }, {passive:false});
+  zoom.oninput = () => setZoom(+zoom.value);
+  draw();
+  let saved = false;
+  w.querySelector("#cropSave").onclick = () => {
+    const sc = base * z, c = document.createElement("canvas"); c.width = c.height = 320;
+    const sx = iw / 2 - (box / 2 + tx) / sc, sy = ih / 2 - (box / 2 + ty) / sc, sw = box / sc;
+    const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, 320, 320); g.drawImage(img, sx, sy, sw, sw, 0, 0, 320, 320);
+    D.profile.photo = c.toDataURL("image/jpeg", .85); saved = true; save(); renderAvatar(); w.remove();
+  };
+  new MutationObserver((m, o) => { if(!w.isConnected){ o.disconnect(); URL.revokeObjectURL(url); if(saved) toast("Profile photo updated"); onDone && onDone(); } }).observe(document.body, {childList:true});
 }
 
 /* ----- Settings ----- */

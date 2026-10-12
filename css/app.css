@@ -783,3 +783,14 @@ html.phone .focus-btn{height:34px;min-width:34px;padding:0 8px}
 .tr-t b{display:flex;align-items:center;min-width:0;overflow:visible}
 .tr-name{font-style:normal;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tr-t b .conn{flex:none}
+
+/* profile photo crop */
+.crop-sheet{max-width:380px}
+.crop-stage{position:relative;width:var(--cs);height:var(--cs);max-width:100%;margin:6px auto 0;overflow:hidden;border-radius:18px;background:#1b1b1f;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.crop-stage:active{cursor:grabbing}
+.crop-stage img{position:absolute;left:50%;top:50%;max-width:none;transform-origin:center;pointer-events:none;-webkit-user-drag:none}
+.crop-ring{position:absolute;inset:0;border-radius:50%;box-shadow:0 0 0 999px rgba(20,20,24,.55);outline:2px solid rgba(255,255,255,.9);outline-offset:-2px;pointer-events:none}
+.crop-hint{text-align:center;color:var(--muted);font-size:13px;margin:12px 0 6px}
+.crop-zoom{display:flex;align-items:center;gap:10px;color:var(--muted);padding:0 6px}
+.crop-zoom input{flex:1;accent-color:var(--accent,#1a73e8);height:28px}
+.crop-btns{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
