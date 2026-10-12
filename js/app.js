@@ -718,7 +718,7 @@ function goalSheet(subjId, onDone){
   };
   box.addEventListener("input", e => { const i = e.target.dataset.i; if(i != null){ list[+i] = e.target.value; count(); } });
   box.addEventListener("click", e => { const x = e.target.closest("[data-x]"); if(x){ list.splice(+x.dataset.x, 1); draw(); } });
-  const skip = w.querySelector("#goalSkip"); if(skip) skip.onclick = () => { w.remove(); openSubject(subjId); };
+  const skip = w.querySelector("#goalSkip"); if(skip) skip.onclick = () => { w.remove(); D.ui.goalSkip = D.ui.goalSkip || {}; D.ui.goalSkip[subjId] = 1; save(); openSubject(subjId); };
   w.querySelector("#goalAdd").onclick = () => { if(list.length < 12){ list.push(""); draw(true); } };
   w.querySelector("#goalForm").onsubmit = ev => {
     ev.preventDefault();
@@ -736,7 +736,7 @@ function goalSheet(subjId, onDone){
   };
   draw();
 }
-function openSubjectAsk(id){ if(D.goals[id] && D.goals[id].length) openSubject(id); else goalSheet(id, () => { renderHome(); openSubject(id); }); }
+function openSubjectAsk(id){ if((D.goals[id] && D.goals[id].length) || (D.ui.goalSkip || {})[id]) openSubject(id); else goalSheet(id, () => { renderHome(); openSubject(id); }); }
 
 function addSubcategory(subjId, onDone){
   const s = subjById(subjId);
@@ -966,7 +966,7 @@ function openSubject(id, keepTopic){
       <button class="act" data-add-topic>${'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>'}Add source</button></div>
       ${!x.lessons.length ? `<p class="muted" style="margin:4px 0 0;font-size:14px">Nothing here yet. Add a video, website or PDF about ${esc(t)}.${(D.extraTopics[id]||[]).includes(t) ? ` <button class="linkish" data-del-topic>Remove this subcategory</button>` : ""}</p>` : ""}
       ${byRecent(x.lessons).map(L => { const st = LS(L), n = itemsOf(L).length, done = st.view === "summary" || st.view === "review";
-        return `<div class="topic-row"><span class="tr-ico">${KIND[kindOf(L)].icon}</span><div class="tr-t"><b>${esc(L.title)}${connBadge(L)}</b><span>${done ? "Finished" : st.answers.length ? `Question ${st.idx+1} of ${n}` : `${n} ${L.questions ? "questions" : "recall prompts"}`}</span></div><a class="act h-primary" href="#/ready/${L.id}">${ICON.q}${done ? "Review" : st.answers.length ? "Continue" : "Start"}</a></div>`; }).join("")}
+        return `<div class="topic-row"><span class="tr-ico">${KIND[kindOf(L)].icon}</span><div class="tr-t"><b><i class="tr-name">${esc(L.title)}</i>${connBadge(L)}</b><span>${done ? "Finished" : st.answers.length ? `Question ${st.idx+1} of ${n}` : `${n} ${L.questions ? "questions" : "recall prompts"}`}</span></div><a class="act h-primary" href="#/ready/${L.id}">${ICON.q}${done ? "Review" : st.answers.length ? "Continue" : "Start"}</a></div>`; }).join("")}
     </div>`;
   };
   checkConnections(id, w);
